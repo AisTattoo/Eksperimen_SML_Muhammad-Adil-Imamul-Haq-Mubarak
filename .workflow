@@ -1,0 +1,52 @@
+name: Preprocessing Automation
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  preprocess:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt; fi
+
+      - name: Run preprocessing script
+        run: |
+          python preprocessing/automate_Muhammad_Adil_Imamul_Haq_Mubarak.py \
+            --input_csv Heart_Desease_raw/heart_desease_data.csv \
+            --output_dir preprocessing/Heart_Desease_preprocessing \
+            --target_col target
+
+      - name: Verify processed outputs
+        run: |
+          ls -lah preprocessing/Heart_Desease_preprocessing
+          test -f preprocessing/Heart_Desease_preprocessing/train_processed.csv
+          test -f preprocessing/Heart_Desease_preprocessing/test_processed.csv
+
+      - name: Commit and push processed dataset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add preprocessing/Heart_Desease_preprocessing/train_processed.csv preprocessing/Heart_Desease_preprocessing/test_processed.csv
+
+          # Kalau tidak ada perubahan, jangan bikin commit kosong
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+
+          git commit -m "chore: update processed dataset"
+          git push
